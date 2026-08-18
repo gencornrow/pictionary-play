@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { randomCode, saveIdentity } from "@/lib/game";
+import { randomCode, randomNickname, saveIdentity } from "@/lib/game";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,7 +32,11 @@ export const Route = createFileRoute("/")({
 
 const nameSchema = z.object({
   realName: z.string().trim().min(1, "Enter your real name").max(40, "Keep it under 40 characters"),
-  nickname: z.string().trim().min(1, "Pick a nickname").max(24, "Keep it under 24 characters"),
+  nickname: z
+    .string()
+    .trim()
+    .max(24, "Keep it under 24 characters")
+    .transform((value) => (value.length > 0 ? value : randomNickname())),
 });
 
 function Landing() {
@@ -172,7 +176,9 @@ function Landing() {
               onChange={(e) => setNickname(e.target.value)}
               placeholder="Doodle Bandit"
             />
-            <p className="text-xs text-muted-foreground">This is all your teammates see.</p>
+            <p className="text-xs text-muted-foreground">
+              This is all your teammates see. Leave it blank and we'll invent one for you.
+            </p>
           </div>
         </div>
 

@@ -103,3 +103,18 @@ export function formatClock(total: number) {
   const s = total % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
+
+const NICK_ADJECTIVES = [
+  "Neon", "Turbo", "Sneaky", "Cosmic", "Wobbly", "Electric", "Midnight", "Glitchy",
+  "Velvet", "Rogue", "Fuzzy", "Laser", "Chaotic", "Silent", "Radical", "Plasma",
+];
+const NICK_NOUNS = [
+  "Doodler", "Scribbler", "Bandit", "Marker", "Comet", "Pixel", "Gremlin", "Phantom",
+  "Crayon", "Sketch", "Wizard", "Otter", "Falcon", "Noodle", "Cactus", "Raccoon",
+];
+
+export function randomNickname() {
+  const a = NICK_ADJECTIVES[Math.floor(Math.random() * NICK_ADJECTIVES.length)];
+  const n = NICK_NOUNS[Math.floor(Math.random() * NICK_NOUNS.length)];
+  return `${a} ${n} ${Math.floor(Math.random() * 90) + 10}`;
+}
