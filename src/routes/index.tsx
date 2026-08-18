@@ -32,7 +32,11 @@ export const Route = createFileRoute("/")({
 
 const nameSchema = z.object({
   realName: z.string().trim().min(1, "Enter your real name").max(40, "Keep it under 40 characters"),
-  nickname: z.string().trim().min(1, "Pick a nickname").max(24, "Keep it under 24 characters"),
+  nickname: z
+    .string()
+    .trim()
+    .max(24, "Keep it under 24 characters")
+    .transform((value) => (value.length > 0 ? value : randomNickname())),
 });
 
 function Landing() {
