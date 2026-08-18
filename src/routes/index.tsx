@@ -176,7 +176,9 @@ function Landing() {
               onChange={(e) => setNickname(e.target.value)}
               placeholder="Doodle Bandit"
             />
-            <p className="text-xs text-muted-foreground">This is all your teammates see.</p>
+            <p className="text-xs text-muted-foreground">
+              This is all your teammates see. Leave it blank and we'll invent one for you.
+            </p>
           </div>
         </div>
 
