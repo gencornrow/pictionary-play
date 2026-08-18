@@ -91,11 +91,11 @@ export function Board({
       onPointerUp={() => {
         if (!interactive || !drawing.current) return;
         drawing.current = false;
-        setLive((prev) => {
-          if (prev && prev.length > 0) onStroke?.(prev, inkColor, inkWidth);
-          return null;
-        });
+        const points = live;
+        setLive(null);
+        if (points && points.length > 0) onStroke?.(points, inkColor, inkWidth);
       }}
+
       onPointerCancel={() => {
         drawing.current = false;
         setLive(null);
