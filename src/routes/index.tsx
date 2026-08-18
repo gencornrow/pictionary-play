@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { randomCode, saveIdentity } from "@/lib/game";
+import { randomCode, randomNickname, saveIdentity } from "@/lib/game";
 
 export const Route = createFileRoute("/")({
   head: () => ({
