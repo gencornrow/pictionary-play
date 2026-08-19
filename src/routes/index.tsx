@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { randomCode, randomNickname, saveIdentity } from "@/lib/game";
+import { randomCode, randomInkColor, randomNickname, saveIdentity } from "@/lib/game";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -74,6 +74,7 @@ function Landing() {
           game_id: game.id,
           real_name: parsed.realName,
           nickname: parsed.nickname,
+          ink_color: randomInkColor(),
           is_host: true,
         })
         .select()
@@ -114,6 +115,7 @@ function Landing() {
           game_id: game.id,
           real_name: parsed.realName,
           nickname: parsed.nickname,
+          ink_color: randomInkColor(),
         })
         .select()
         .single();
