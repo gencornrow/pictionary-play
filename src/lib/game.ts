@@ -1,7 +1,13 @@
-export type Phase = "lobby" | "discuss" | "draw" | "vote" | "results";
+export type Phase = "lobby" | "discuss" | "draw" | "vote" | "results" | "complete";
 
 export const DISCUSS_SECONDS = 60;
 export const DRAW_SECONDS = 120;
+
+/** Ranked-choice: 1st = 3 pts, 2nd = 2 pts, 3rd = 1 pt. */
+export const RANKS = [1, 2, 3] as const;
+export const rankPoints = (rank: number) => Math.max(0, 4 - rank);
+export const rankLabel = (rank: number) => (rank === 1 ? "1st" : rank === 2 ? "2nd" : "3rd");
+
 
 export type Game = {
   id: string;
