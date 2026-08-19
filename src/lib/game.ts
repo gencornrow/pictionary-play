@@ -1,7 +1,13 @@
-export type Phase = "lobby" | "discuss" | "draw" | "vote" | "results";
+export type Phase = "lobby" | "discuss" | "draw" | "vote" | "results" | "complete";
 
 export const DISCUSS_SECONDS = 60;
 export const DRAW_SECONDS = 120;
+
+/** Ranked-choice: 1st = 3 pts, 2nd = 2 pts, 3rd = 1 pt. */
+export const RANKS = [1, 2, 3] as const;
+export const rankPoints = (rank: number) => Math.max(0, 4 - rank);
+export const rankLabel = (rank: number) => (rank === 1 ? "1st" : rank === 2 ? "2nd" : "3rd");
+
 
 export type Game = {
   id: string;
@@ -26,6 +32,7 @@ export type Player = {
   nickname: string;
   team_id: string | null;
   is_host: boolean;
+  ink_color: string;
 };
 
 export type Point = { x: number; y: number };
@@ -53,6 +60,7 @@ export type Vote = {
   round: number;
   player_id: string;
   team_id: string;
+  rank: number;
 };
 
 export const TEAM_PRESETS = [
@@ -62,7 +70,22 @@ export const TEAM_PRESETS = [
   { name: "Team Mint", color: "#3DF2A5" },
 ];
 
-export const INK_COLORS = ["#F5F7FA", "#00E5FF", "#B14CFF", "#3DF2A5", "#FFD23F", "#FF6B4A"];
+export const INK_COLORS = [
+  "#F5F7FA",
+  "#00E5FF",
+  "#B14CFF",
+  "#3DF2A5",
+  "#FFD23F",
+  "#FF6B4A",
+  "#FF4FD8",
+  "#7CFF4F",
+  "#4F8BFF",
+  "#FFAE3F",
+];
+
+export function randomInkColor() {
+  return INK_COLORS[Math.floor(Math.random() * INK_COLORS.length)]!;
+}
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 

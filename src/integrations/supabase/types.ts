@@ -107,6 +107,7 @@ export type Database = {
           created_at: string
           game_id: string
           id: string
+          ink_color: string
           is_host: boolean
           nickname: string
           real_name: string
@@ -116,6 +117,7 @@ export type Database = {
           created_at?: string
           game_id: string
           id?: string
+          ink_color?: string
           is_host?: boolean
           nickname: string
           real_name: string
@@ -125,6 +127,7 @@ export type Database = {
           created_at?: string
           game_id?: string
           id?: string
+          ink_color?: string
           is_host?: boolean
           nickname?: string
           real_name?: string
@@ -243,6 +246,7 @@ export type Database = {
           game_id: string
           id: string
           player_id: string
+          rank: number
           round: number
           team_id: string
         }
@@ -251,6 +255,7 @@ export type Database = {
           game_id: string
           id?: string
           player_id: string
+          rank?: number
           round?: number
           team_id: string
         }
@@ -259,6 +264,7 @@ export type Database = {
           game_id?: string
           id?: string
           player_id?: string
+          rank?: number
           round?: number
           team_id?: string
         }

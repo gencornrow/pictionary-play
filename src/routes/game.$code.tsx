@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Crown, Eraser, Timer, Trophy } from "lucide-react";
+import { Crown, Eraser, Flag, Timer, Trophy } from "lucide-react";
 import { toast } from "sonner";
 
 import { Board } from "@/components/Board";
@@ -12,9 +12,11 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   DISCUSS_SECONDS,
   DRAW_SECONDS,
-  INK_COLORS,
+  RANKS,
   TEAM_PRESETS,
   formatClock,
+  rankLabel,
+  rankPoints,
   loadIdentity,
   secondsLeft,
   type Game,
@@ -58,7 +60,6 @@ function GameRoom() {
   const [votes, setVotes] = useState<Vote[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [now, setNow] = useState(() => Date.now());
-  const [ink, setInk] = useState(INK_COLORS[0]!);
   const [width, setWidth] = useState(5);
   const [promptDraft, setPromptDraft] = useState("");
   const [teamCount, setTeamCount] = useState(2);
@@ -221,13 +222,15 @@ function GameRoom() {
     [players],
   );
   const roundVotes = useMemo(() => votes.filter((v) => v.round === round), [votes, round]);
+  const maxPicks = Math.max(0, Math.min(3, teams.length - 1));
 
-  // Auto-close voting once everyone has voted
+  // Auto-close voting once everyone has used all their ranked picks
   useEffect(() => {
     if (!isHost || phase !== "vote") return;
-    if (eligibleVoters === 0 || roundVotes.length < eligibleVoters) return;
+    if (eligibleVoters === 0 || maxPicks === 0) return;
+    if (roundVotes.length < eligibleVoters * maxPicks) return;
     void setPhase("results", null);
-  }, [isHost, phase, roundVotes.length, eligibleVoters, setPhase]);
+  }, [isHost, phase, roundVotes.length, eligibleVoters, maxPicks, setPhase]);
 
   const assignTeams = async () => {
     if (!gameId) return;
@@ -241,15 +244,18 @@ function GameRoom() {
       .eq("game_id", gameId)
       .order("created_at");
     const fresh = (created ?? []) as Team[];
-    const shuffled = [...players].sort(() => Math.random() - 0.5);
-    await Promise.all(
-      shuffled.map((p, i) =>
+    const shuffled = [...players].filter((p) => !p.is_host).sort(() => Math.random() - 0.5);
+    await Promise.all([
+      ...shuffled.map((p, i) =>
         supabase
           .from("players")
           .update({ team_id: fresh[i % fresh.length]!.id })
           .eq("id", p.id),
       ),
-    );
+      ...players
+        .filter((p) => p.is_host)
+        .map((p) => supabase.from("players").update({ team_id: null }).eq("id", p.id)),
+    ]);
     await refresh(gameId);
     toast.success("Teams assigned");
   };
@@ -311,26 +317,41 @@ function GameRoom() {
     }
   };
 
-  const castVote = async (teamId: string) => {
+  const myVotes = useMemo(
+    () => roundVotes.filter((v) => v.player_id === me?.id),
+    [roundVotes, me?.id],
+  );
+
+  const castVote = async (teamId: string, rank: number) => {
     if (!gameId || !me) return;
-    const { error } = await supabase
-      .from("votes")
-      .upsert(
-        { game_id: gameId, round, player_id: me.id, team_id: teamId },
-        { onConflict: "game_id,round,player_id" },
-      );
-    if (error) toast.error("Vote didn't land. Try again.");
-    else toast.success("Vote locked in");
+    const existing = myVotes.find((v) => v.team_id === teamId && v.rank === rank);
+    const conflicting = myVotes.filter((v) => v.team_id === teamId || v.rank === rank);
+    if (conflicting.length > 0) {
+      await supabase
+        .from("votes")
+        .delete()
+        .in("id", conflicting.map((v) => v.id));
+    }
+    if (!existing) {
+      const { error } = await supabase
+        .from("votes")
+        .insert({ game_id: gameId, round, player_id: me.id, team_id: teamId, rank });
+      if (error) toast.error("Vote didn't land. Try again.");
+    }
     await refresh(gameId);
   };
 
-  const myVote = roundVotes.find((v) => v.player_id === me?.id) ?? null;
-
   const tally = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const v of roundVotes) counts.set(v.team_id, (counts.get(v.team_id) ?? 0) + 1);
+    for (const v of roundVotes) counts.set(v.team_id, (counts.get(v.team_id) ?? 0) + rankPoints(v.rank));
     return counts;
   }, [roundVotes]);
+
+  const totals = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const v of votes) counts.set(v.team_id, (counts.get(v.team_id) ?? 0) + rankPoints(v.rank));
+    return counts;
+  }, [votes]);
 
   const topScore = Math.max(0, ...teams.map((t) => tally.get(t.id) ?? 0));
 
@@ -414,7 +435,11 @@ function GameRoom() {
                   className="w-24"
                 />
               </div>
-              <Button variant="neonAccent" onClick={assignTeams} disabled={players.length < 2}>
+        <Button
+                variant="neonAccent"
+                onClick={assignTeams}
+                disabled={players.filter((p) => !p.is_host).length < 2}
+              >
                 Create teams &amp; shuffle players
               </Button>
               {players.length < 2 ? (
@@ -454,6 +479,21 @@ function GameRoom() {
               </Button>
             </div>
           ) : null}
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              variant="neonAccent"
+              disabled={phase !== "results"}
+              onClick={() => void setPhase("complete", null)}
+            >
+              <Flag /> Complete game
+            </Button>
+            {phase !== "results" ? (
+              <span className="text-sm text-muted-foreground">
+                Available once a round wraps up.
+              </span>
+            ) : null}
+          </div>
 
           {phase === "discuss" || phase === "draw" ? (
             <Button
@@ -535,27 +575,18 @@ function GameRoom() {
                 <Board
                   strokes={roundStrokes(myTeam.id)}
                   interactive={phase === "draw"}
-                  inkColor={ink}
+                  inkColor={me.ink_color}
                   inkWidth={width}
                   onStroke={(points, color, w) => void addStroke(points, color, w)}
                 />
                 {phase === "draw" ? (
                   <div className="flex flex-wrap items-center gap-3">
-                    <div className="flex gap-2">
-                      {INK_COLORS.map((c) => (
-                        <button
-                          key={c}
-                          type="button"
-                          aria-label={`Ink ${c}`}
-                          onClick={() => setInk(c)}
-                          className={
-                            ink === c
-                              ? "size-7 rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background"
-                              : "size-7 rounded-full"
-                          }
-                          style={{ backgroundColor: c }}
-                        />
-                      ))}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span
+                        className="size-7 rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background"
+                        style={{ backgroundColor: me.ink_color }}
+                      />
+                      your color
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Eraser className="size-4" /> brush
@@ -591,7 +622,7 @@ function GameRoom() {
               <TeamChat
                 messages={teamMessages}
                 myNickname={me.nickname}
-                disabled={phase !== "discuss" || !myTeam}
+                disabled={!myTeam}
                 onSend={(content) => void sendMessage(content)}
               />
             </div>
