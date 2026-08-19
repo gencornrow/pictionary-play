@@ -12,4 +12,6 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Build a standalone Node.js server for on-prem Docker hosting.
+  nitro: { preset: "node-server", output: { dir: ".output" } },
 });
