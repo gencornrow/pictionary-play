@@ -402,7 +402,7 @@ function GameRoom() {
               {myTeam.name}
             </span>
           ) : (
-            <span className="text-sm text-muted-foreground">Spectating</span>
+            <span className="text-sm text-muted-foreground">{isHost ? "Hosting" : "Spectating"}</span>
           )}
           <span className="text-sm text-muted-foreground">
             You are <strong className="text-foreground">{me.nickname}</strong>
@@ -641,7 +641,7 @@ function GameRoom() {
             </div>
             <p className="text-sm text-muted-foreground">
               {phase === "vote"
-                ? "You can't vote for your own team."
+                ? `Rank up to ${maxPicks} other teams — 1st = 3 pts, 2nd = 2, 3rd = 1.`
                 : `Round ${round} complete.`}
             </p>
           </div>
@@ -650,6 +650,7 @@ function GameRoom() {
             {teams.map((team) => {
               const count = tally.get(team.id) ?? 0;
               const isWinner = phase === "results" && count > 0 && count === topScore;
+              const myRank = myVotes.find((v) => v.team_id === team.id)?.rank ?? null;
               return (
                 <div
                   key={team.id}
@@ -666,24 +667,30 @@ function GameRoom() {
                     </h3>
                     {phase === "results" ? (
                       <span className="font-display text-lg">
-                        {count} {count === 1 ? "vote" : "votes"}
+                        {count} {count === 1 ? "pt" : "pts"}
                       </span>
                     ) : null}
                   </div>
                   <Board strokes={roundStrokes(team.id)} />
                   {phase === "vote" ? (
-                    <Button
-                      variant={myVote?.team_id === team.id ? "neon" : "neonOutline"}
-                      className="w-full"
-                      disabled={team.id === me.team_id}
-                      onClick={() => void castVote(team.id)}
-                    >
-                      {team.id === me.team_id
-                        ? "Can't vote for your own"
-                        : myVote?.team_id === team.id
-                          ? "Your vote"
-                          : `Vote for ${team.name}`}
-                    </Button>
+                    team.id === me.team_id ? (
+                      <p className="text-center text-sm text-muted-foreground">
+                        You can't vote for your own team.
+                      </p>
+                    ) : (
+                      <div className="flex gap-2">
+                        {RANKS.slice(0, maxPicks).map((r) => (
+                          <Button
+                            key={r}
+                            className="flex-1"
+                            variant={myRank === r ? "neon" : "neonOutline"}
+                            onClick={() => void castVote(team.id, r)}
+                          >
+                            {rankLabel(r)} · {rankPoints(r)} pts
+                          </Button>
+                        ))}
+                      </div>
+                    )
                   ) : null}
                 </div>
               );
@@ -697,6 +704,68 @@ function GameRoom() {
           ) : null}
         </section>
       ) : null}
+
+      {phase === "complete" ? (
+        <section className="space-y-4">
+          <div className="neon-panel p-6 text-center">
+            <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Game over</p>
+            <h2 className="font-display text-3xl text-gradient-neon">Final scores</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {round} {round === 1 ? "round" : "rounds"} played · real names revealed
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {[...teams]
+              .sort((a, b) => (totals.get(b.id) ?? 0) - (totals.get(a.id) ?? 0))
+              .map((team, index) => {
+                const points = totals.get(team.id) ?? 0;
+                const champion = index === 0 && points > 0;
+                return (
+                  <div
+                    key={team.id}
+                    className="neon-panel space-y-3 p-4"
+                    style={champion ? { borderColor: team.color } : undefined}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <h3
+                        className="inline-flex items-center gap-2 text-lg"
+                        style={{ color: team.color }}
+                      >
+                        {champion ? <Trophy className="size-4" /> : null}
+                        {team.name}
+                      </h3>
+                      <span className="font-display text-2xl">{points} pts</span>
+                    </div>
+                    <ul className="space-y-1 text-sm">
+                      {players
+                        .filter((p) => p.team_id === team.id)
+                        .map((p) => (
+                          <li key={p.id} className="flex items-center gap-2">
+                            <span
+                              className="size-3 rounded-full"
+                              style={{ backgroundColor: p.ink_color }}
+                            />
+                            <span className="text-foreground">{p.real_name}</span>
+                            <span className="text-muted-foreground">played as {p.nickname}</span>
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                );
+              })}
+          </div>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Hosted by{" "}
+            {players
+              .filter((p) => p.is_host)
+              .map((p) => `${p.real_name} (${p.nickname})`)
+              .join(", ")}
+          </p>
+        </section>
+      ) : null}
+
     </main>
   );
 }
