@@ -83,7 +83,8 @@ function Landing() {
 
       saveIdentity(code, { playerId: player.id, hostKey: game.host_key });
       await navigate({ to: "/game/$code", params: { code } });
-    } catch {
+    } catch (err) {
+      console.error("[host] create room failed:", err);
       toast.error("Could not create the room. Try again.");
     } finally {
       setBusy(false);
@@ -122,7 +123,8 @@ function Landing() {
       if (error || !player) throw error ?? new Error("join failed");
       saveIdentity(code, { playerId: player.id });
       await navigate({ to: "/game/$code", params: { code } });
-    } catch {
+    } catch (err) {
+      console.error("[join] join room failed:", err);
       toast.error("Could not join that room. Try again.");
     } finally {
       setBusy(false);
