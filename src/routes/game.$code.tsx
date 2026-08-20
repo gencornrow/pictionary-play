@@ -288,8 +288,14 @@ function GameRoom() {
 
   const addStroke = async (points: Point[], color: string, strokeWidth: number) => {
     if (!gameId || !me?.team_id) return;
+    // crypto.randomUUID() is undefined in insecure contexts (e.g. http://<lan-ip>:3000),
+    // so fall back to a plain random id for the optimistic row.
+    const localId =
+      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const optimistic: Stroke = {
-      id: `local-${crypto.randomUUID()}`,
+      id: `local-${localId}`,
       team_id: me.team_id,
       round,
       points,
@@ -297,7 +303,7 @@ function GameRoom() {
       width: strokeWidth,
     };
     setStrokes((prev) => [...prev, optimistic]);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("strokes")
       .insert({
         game_id: gameId,
@@ -310,12 +316,19 @@ function GameRoom() {
       })
       .select()
       .single();
+    if (error) {
+      console.error("[strokes] insert failed", error);
+      toast.error(error.message || "Could not save that stroke.");
+      setStrokes((prev) => prev.filter((s) => s.id !== optimistic.id));
+      return;
+    }
     if (data) {
       setStrokes((prev) =>
         prev.map((s) => (s.id === optimistic.id ? (data as unknown as Stroke) : s)),
       );
     }
   };
+
 
   const myVotes = useMemo(
     () => roundVotes.filter((v) => v.player_id === me?.id),
