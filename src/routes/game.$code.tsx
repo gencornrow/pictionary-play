@@ -402,7 +402,7 @@ function GameRoom() {
               {myTeam.name}
             </span>
           ) : (
-            <span className="text-sm text-muted-foreground">Spectating</span>
+            <span className="text-sm text-muted-foreground">{isHost ? "Hosting" : "Spectating"}</span>
           )}
           <span className="text-sm text-muted-foreground">
             You are <strong className="text-foreground">{me.nickname}</strong>
