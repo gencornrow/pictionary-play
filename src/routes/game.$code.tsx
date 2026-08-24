@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Crown, Eraser, Flag, Timer, Trophy } from "lucide-react";
+import { Crown, Eraser, Flag, Paintbrush, Timer, Trophy } from "lucide-react";
 import { toast } from "sonner";
 
-import { Board } from "@/components/Board";
+import { Board, ERASER_COLOR } from "@/components/Board";
 import { TeamChat } from "@/components/TeamChat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +61,8 @@ function GameRoom() {
   const [loaded, setLoaded] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [width, setWidth] = useState(5);
+  const [eraserWidth, setEraserWidth] = useState(24);
+  const [tool, setTool] = useState<"brush" | "eraser">("brush");
   const [promptDraft, setPromptDraft] = useState("");
   const [teamCount, setTeamCount] = useState(2);
   const advancing = useRef(false);
