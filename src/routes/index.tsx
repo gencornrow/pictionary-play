@@ -154,7 +154,7 @@ function Landing() {
       </header>
 
       <section className="neon-panel grid gap-6 p-6 sm:p-8">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4">
           <div className="space-y-2">
             <Label htmlFor="realName">Your real name</Label>
             <Input
@@ -162,21 +162,11 @@ function Landing() {
               value={realName}
               maxLength={40}
               onChange={(e) => setRealName(e.target.value)}
-              placeholder="Dwaine Austin"
-            />
-            <p className="text-xs text-muted-foreground">Only the host can see this.</p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="nickname">Your fake nickname</Label>
-            <Input
-              id="nickname"
-              value={nickname}
-              maxLength={24}
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="Doodle Bandit"
+              placeholder="George Washington"
             />
             <p className="text-xs text-muted-foreground">
-              This is all your teammates see. Leave it blank and we'll invent one for you.
+              Only the host can see this. We'll assign you a random fake nickname that's all your
+              teammates see.
             </p>
           </div>
         </div>
