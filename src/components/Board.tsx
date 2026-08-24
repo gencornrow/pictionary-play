@@ -38,7 +38,9 @@ export function Board({
 
     const drawPath = (points: Point[], color: string, width: number) => {
       if (points.length === 0) return;
-      ctx.strokeStyle = color;
+      const erasing = color === ERASER_COLOR;
+      ctx.globalCompositeOperation = erasing ? "destination-out" : "source-over";
+      ctx.strokeStyle = erasing ? "rgba(0,0,0,1)" : color;
       ctx.lineWidth = width;
       ctx.beginPath();
       const first = points[0]!;
@@ -49,7 +51,9 @@ export function Board({
         for (const p of points.slice(1)) ctx.lineTo(p.x * W, p.y * H);
       }
       ctx.stroke();
+      ctx.globalCompositeOperation = "source-over";
     };
+
 
     for (const stroke of strokes) drawPath(stroke.points, stroke.color, stroke.width);
     if (live) drawPath(live, inkColor, inkWidth);
