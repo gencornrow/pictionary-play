@@ -588,8 +588,8 @@ function GameRoom() {
                 <Board
                   strokes={roundStrokes(myTeam.id)}
                   interactive={phase === "draw"}
-                  inkColor={me.ink_color}
-                  inkWidth={width}
+                  inkColor={tool === "eraser" ? ERASER_COLOR : me.ink_color}
+                  inkWidth={tool === "eraser" ? eraserWidth : width}
                   onStroke={(points, color, w) => void addStroke(points, color, w)}
                 />
                 {phase === "draw" ? (
@@ -601,14 +601,32 @@ function GameRoom() {
                       />
                       your color
                     </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant={tool === "brush" ? "neon" : "neonOutline"}
+                        onClick={() => setTool("brush")}
+                      >
+                        <Paintbrush className="size-4" /> Brush
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={tool === "eraser" ? "neon" : "neonOutline"}
+                        onClick={() => setTool("eraser")}
+                      >
+                        <Eraser className="size-4" /> Eraser
+                      </Button>
+                    </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Eraser className="size-4" /> brush
-                      {[3, 6, 12, 24].map((w) => (
+                      {tool === "eraser" ? "eraser size" : "brush size"}
+                      {(tool === "eraser" ? [12, 24, 48] : [3, 6, 12, 24]).map((w) => (
                         <Button
                           key={w}
                           size="sm"
-                          variant={width === w ? "neon" : "neonOutline"}
-                          onClick={() => setWidth(w)}
+                          variant={
+                            (tool === "eraser" ? eraserWidth : width) === w ? "neon" : "neonOutline"
+                          }
+                          onClick={() => (tool === "eraser" ? setEraserWidth(w) : setWidth(w))}
                         >
                           {w}
                         </Button>
@@ -616,6 +634,7 @@ function GameRoom() {
                     </div>
                   </div>
                 ) : null}
+
               </>
             ) : (
               <p className="text-muted-foreground">
