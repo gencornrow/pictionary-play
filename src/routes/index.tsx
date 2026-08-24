@@ -32,22 +32,17 @@ export const Route = createFileRoute("/")({
 
 const nameSchema = z.object({
   realName: z.string().trim().min(1, "Enter your real name").max(40, "Keep it under 40 characters"),
-  nickname: z
-    .string()
-    .trim()
-    .max(24, "Keep it under 24 characters")
-    .transform((value) => (value.length > 0 ? value : randomNickname())),
+  nickname: z.string().transform(() => randomNickname()),
 });
 
 function Landing() {
   const navigate = useNavigate();
   const [realName, setRealName] = useState("");
-  const [nickname, setNickname] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [busy, setBusy] = useState(false);
 
   const names = () => {
-    const parsed = nameSchema.safeParse({ realName, nickname });
+    const parsed = nameSchema.safeParse({ realName, nickname: "" });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Check your details");
       return null;
