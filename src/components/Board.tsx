@@ -6,6 +6,10 @@ import type { Point, Stroke } from "@/lib/game";
 const W = 1000;
 const H = 640;
 
+/** Sentinel ink color: strokes with this color erase instead of paint. */
+export const ERASER_COLOR = "erase";
+
+
 type BoardProps = {
   strokes: Stroke[];
   interactive?: boolean;
