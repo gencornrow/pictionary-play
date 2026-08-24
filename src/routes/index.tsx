@@ -32,22 +32,17 @@ export const Route = createFileRoute("/")({
 
 const nameSchema = z.object({
   realName: z.string().trim().min(1, "Enter your real name").max(40, "Keep it under 40 characters"),
-  nickname: z
-    .string()
-    .trim()
-    .max(24, "Keep it under 24 characters")
-    .transform((value) => (value.length > 0 ? value : randomNickname())),
+  nickname: z.string().transform(() => randomNickname()),
 });
 
 function Landing() {
   const navigate = useNavigate();
   const [realName, setRealName] = useState("");
-  const [nickname, setNickname] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [busy, setBusy] = useState(false);
 
   const names = () => {
-    const parsed = nameSchema.safeParse({ realName, nickname });
+    const parsed = nameSchema.safeParse({ realName, nickname: "" });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Check your details");
       return null;
@@ -159,7 +154,7 @@ function Landing() {
       </header>
 
       <section className="neon-panel grid gap-6 p-6 sm:p-8">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4">
           <div className="space-y-2">
             <Label htmlFor="realName">Your real name</Label>
             <Input
@@ -167,21 +162,11 @@ function Landing() {
               value={realName}
               maxLength={40}
               onChange={(e) => setRealName(e.target.value)}
-              placeholder="Dwaine Austin"
-            />
-            <p className="text-xs text-muted-foreground">Only the host can see this.</p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="nickname">Your fake nickname</Label>
-            <Input
-              id="nickname"
-              value={nickname}
-              maxLength={24}
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="Doodle Bandit"
+              placeholder="George Washington"
             />
             <p className="text-xs text-muted-foreground">
-              This is all your teammates see. Leave it blank and we'll invent one for you.
+              Only the host can see this. We'll assign you a random fake nickname that's all your
+              teammates see.
             </p>
           </div>
         </div>
