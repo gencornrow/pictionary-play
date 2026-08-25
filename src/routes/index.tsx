@@ -13,13 +13,13 @@ import { randomCode, randomInkColor, randomNickname, saveIdentity } from "@/lib/
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Neon Pictionary — Team Drawing Party Game" },
+      { title: "Whiteboard — Team Drawing Party Game" },
       {
         name: "description",
         content:
           "Host a live Pictionary battle: teams chat for a minute, draw together for two, then vote on the best board.",
       },
-      { property: "og:title", content: "Neon Pictionary — Team Drawing Party Game" },
+      { property: "og:title", content: "Whiteboard — Team Drawing Party Game" },
       {
         property: "og:description",
         content:
@@ -133,7 +133,7 @@ function Landing() {
           live team drawing
         </span>
         <h1 className="font-display text-5xl leading-[1.05] sm:text-6xl">
-          <span className="text-gradient-neon">Neon Pictionary</span>
+          <span className="text-gradient-neon">Whiteboard</span>
         </h1>
         <p className="max-w-xl text-base text-muted-foreground">
           Everyone joins under a fake nickname. Teams get 1 minute to scheme in private chat, 2
