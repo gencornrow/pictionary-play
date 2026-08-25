@@ -76,7 +76,7 @@ function Landing() {
         .single();
       if (playerError || !player) throw playerError ?? new Error("Could not join the room");
 
-      saveIdentity(code, { playerId: player.id, hostKey: game.host_key });
+      saveIdentity(code, { playerId: player.id });
       await navigate({ to: "/game/$code", params: { code } });
     } catch (err) {
       console.error("[host] create room failed:", err);
