@@ -22,7 +22,7 @@ type BoardProps = {
 export function Board({
   strokes,
   interactive = false,
-  inkColor = "#F5F7FA",
+  inkColor = "#1F3B5B",
   inkWidth = 5,
   onStroke,
   className,
