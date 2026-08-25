@@ -64,23 +64,23 @@ export type Vote = {
 };
 
 export const TEAM_PRESETS = [
-  { name: "Team Volt", color: "#00E5FF" },
-  { name: "Team Nova", color: "#B14CFF" },
-  { name: "Team Ember", color: "#FF6B4A" },
-  { name: "Team Mint", color: "#3DF2A5" },
+  { name: "Team Volt", color: "#1F3B5B" },
+  { name: "Team Nova", color: "#4E6B88" },
+  { name: "Team Ember", color: "#5D8F68" },
+  { name: "Team Mint", color: "#7A95B0" },
 ];
 
 export const INK_COLORS = [
-  "#F5F7FA",
-  "#00E5FF",
-  "#B14CFF",
-  "#3DF2A5",
-  "#FFD23F",
-  "#FF6B4A",
-  "#FF4FD8",
-  "#7CFF4F",
-  "#4F8BFF",
-  "#FFAE3F",
+  "#1F3B5B",
+  "#4E6B88",
+  "#6E7781",
+  "#2F3438",
+  "#5D8F68",
+  "#7A95B0",
+  "#203A5B",
+  "#5F7287",
+  "#3C5A78",
+  "#47705C",
 ];
 
 export function randomInkColor() {

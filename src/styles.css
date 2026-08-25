@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Neon Night design system for the Pictionary party game.
+ * Corporate slate/navy design system (from the supplied Power BI theme) for the Pictionary party game.
  * All colors are oklch tokens. Never hardcode colors in components.
  */
 
@@ -60,53 +60,74 @@
 
 :root {
   --radius: 0.9rem;
-  --background: oklch(0.17 0.024 265);
-  --foreground: oklch(0.97 0.005 250);
-  --surface: oklch(0.22 0.028 266);
-  --surface-2: oklch(0.27 0.032 268);
-  --card: oklch(0.22 0.028 266);
-  --card-foreground: oklch(0.97 0.005 250);
-  --popover: oklch(0.22 0.028 266);
-  --popover-foreground: oklch(0.97 0.005 250);
-  --primary: oklch(0.84 0.145 200);
-  --primary-foreground: oklch(0.17 0.024 265);
-  --secondary: oklch(0.29 0.035 268);
-  --secondary-foreground: oklch(0.97 0.005 250);
-  --muted: oklch(0.27 0.03 268);
-  --muted-foreground: oklch(0.72 0.024 262);
-  --accent: oklch(0.64 0.235 305);
-  --accent-foreground: oklch(0.98 0.005 250);
-  --destructive: oklch(0.63 0.23 20);
-  --destructive-foreground: oklch(0.98 0.005 250);
-  --success: oklch(0.78 0.17 160);
-  --success-foreground: oklch(0.17 0.024 265);
-  --border: oklch(0.34 0.035 268);
-  --input: oklch(0.3 0.033 268);
-  --ring: oklch(0.84 0.145 200);
-  --chart-1: oklch(0.84 0.145 200);
-  --chart-2: oklch(0.64 0.235 305);
-  --chart-3: oklch(0.78 0.17 160);
-  --chart-4: oklch(0.83 0.16 85);
-  --chart-5: oklch(0.68 0.2 20);
-  --sidebar: oklch(0.2 0.026 266);
-  --sidebar-foreground: oklch(0.97 0.005 250);
-  --sidebar-primary: oklch(0.84 0.145 200);
-  --sidebar-primary-foreground: oklch(0.17 0.024 265);
-  --sidebar-accent: oklch(0.27 0.032 268);
-  --sidebar-accent-foreground: oklch(0.97 0.005 250);
-  --sidebar-border: oklch(0.34 0.035 268);
-  --sidebar-ring: oklch(0.84 0.145 200);
+  --background: oklch(0.979 0.003 264);
+  --foreground: oklch(0.345 0.067 255);
+  --surface: oklch(1 0 0);
+  --surface-2: oklch(0.959 0.009 248);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.345 0.067 255);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.345 0.067 255);
+  --primary: oklch(0.347 0.066 253);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.898 0.009 248);
+  --secondary-foreground: oklch(0.345 0.067 255);
+  --muted: oklch(0.959 0.009 248);
+  --muted-foreground: oklch(0.544 0.04 251);
+  --accent: oklch(0.517 0.057 249);
+  --accent-foreground: oklch(0.99 0 0);
+  --destructive: oklch(0.52 0.16 28);
+  --destructive-foreground: oklch(0.99 0 0);
+  --success: oklch(0.603 0.08 150);
+  --success-foreground: oklch(0.99 0 0);
+  --border: oklch(0.892 0.01 248);
+  --input: oklch(0.882 0.011 248);
+  --ring: oklch(0.517 0.057 249);
+  --chart-1: oklch(0.347 0.066 253);
+  --chart-2: oklch(0.517 0.057 249);
+  --chart-3: oklch(0.565 0.019 251);
+  --chart-4: oklch(0.603 0.08 150);
+  --chart-5: oklch(0.659 0.051 249);
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.345 0.067 255);
+  --sidebar-primary: oklch(0.347 0.066 253);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.959 0.009 248);
+  --sidebar-accent-foreground: oklch(0.345 0.067 255);
+  --sidebar-border: oklch(0.892 0.01 248);
+  --sidebar-ring: oklch(0.517 0.057 249);
 
   --gradient-neon: linear-gradient(115deg, var(--primary), var(--accent));
-  --glow-primary: 0 0 0 1px color-mix(in oklab, var(--primary) 45%, transparent),
-    0 0 36px -6px color-mix(in oklab, var(--primary) 55%, transparent);
-  --glow-accent: 0 0 0 1px color-mix(in oklab, var(--accent) 45%, transparent),
-    0 0 36px -6px color-mix(in oklab, var(--accent) 55%, transparent);
+  --glow-primary: 0 0 0 1px color-mix(in oklab, var(--primary) 18%, transparent),
+    0 12px 28px -14px color-mix(in oklab, var(--primary) 45%, transparent);
+  --glow-accent: 0 0 0 1px color-mix(in oklab, var(--accent) 20%, transparent),
+    0 12px 28px -14px color-mix(in oklab, var(--accent) 40%, transparent);
 }
 
 .dark {
-  --background: oklch(0.17 0.024 265);
-  --foreground: oklch(0.97 0.005 250);
+  --background: oklch(0.24 0.03 254);
+  --foreground: oklch(0.96 0.005 250);
+  --surface: oklch(0.29 0.032 254);
+  --surface-2: oklch(0.33 0.034 254);
+  --card: oklch(0.29 0.032 254);
+  --card-foreground: oklch(0.96 0.005 250);
+  --popover: oklch(0.29 0.032 254);
+  --popover-foreground: oklch(0.96 0.005 250);
+  --primary: oklch(0.659 0.051 249);
+  --primary-foreground: oklch(0.2 0.03 254);
+  --secondary: oklch(0.34 0.03 250);
+  --secondary-foreground: oklch(0.96 0.005 250);
+  --muted: oklch(0.33 0.028 250);
+  --muted-foreground: oklch(0.756 0.018 248);
+  --accent: oklch(0.517 0.057 249);
+  --accent-foreground: oklch(0.99 0 0);
+  --border: oklch(0.4 0.03 250);
+  --input: oklch(0.38 0.03 250);
+  --ring: oklch(0.659 0.051 249);
+  --sidebar: oklch(0.27 0.03 254);
+  --sidebar-foreground: oklch(0.96 0.005 250);
+  --sidebar-accent: oklch(0.33 0.032 254);
+  --sidebar-border: oklch(0.4 0.03 250);
 }
 
 @layer base {
@@ -119,8 +140,8 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     background-image:
-      radial-gradient(60rem 40rem at 12% -10%, color-mix(in oklab, var(--accent) 22%, transparent), transparent),
-      radial-gradient(52rem 34rem at 92% 0%, color-mix(in oklab, var(--primary) 18%, transparent), transparent);
+      radial-gradient(60rem 40rem at 12% -10%, color-mix(in oklab, var(--accent) 12%, transparent), transparent),
+      radial-gradient(52rem 34rem at 92% 0%, color-mix(in oklab, var(--primary) 8%, transparent), transparent);
     background-attachment: fixed;
   }
 
@@ -133,7 +154,7 @@
 }
 
 @utility neon-panel {
-  background: color-mix(in oklab, var(--surface) 82%, transparent);
+  background: color-mix(in oklab, var(--surface) 92%, transparent);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   backdrop-filter: blur(10px);
