@@ -478,9 +478,6 @@ function GameRoom() {
               <Button variant="neon" onClick={startRound}>
                 Start round {round + 1}
               </Button>
-              <Button variant="neonOutline" onClick={assignTeams}>
-                Reshuffle teams
-              </Button>
             </div>
           ) : null}
 
