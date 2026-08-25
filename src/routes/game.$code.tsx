@@ -32,13 +32,13 @@ import {
 export const Route = createFileRoute("/game/$code")({
   head: () => ({
     meta: [
-      { title: "Game room — Neon Pictionary" },
+      { title: "Game room — Whiteboard" },
       {
         name: "description",
         content:
           "Your live Pictionary room: team chat, a shared whiteboard timer, and voting on the best drawing.",
       },
-      { property: "og:title", content: "Game room — Neon Pictionary" },
+      { property: "og:title", content: "Game room — Whiteboard" },
       {
         property: "og:description",
         content:
@@ -402,7 +402,7 @@ function GameRoom() {
       <header className="neon-panel mb-6 flex flex-wrap items-center justify-between gap-4 p-4">
         <div>
           <Link to="/" className="font-display text-xl text-gradient-neon">
-            Neon Pictionary
+            Whiteboard
           </Link>
           <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
             Room {game.code} · Round {round || "–"}
