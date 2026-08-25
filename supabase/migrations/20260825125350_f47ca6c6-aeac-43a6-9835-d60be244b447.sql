@@ -1,0 +1,1 @@
+ALTER TABLE public.games DROP COLUMN IF EXISTS host_key;

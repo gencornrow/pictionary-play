@@ -18,7 +18,6 @@ export type Database = {
         Row: {
           code: string
           created_at: string
-          host_key: string
           id: string
           phase: string
           phase_ends_at: string | null
@@ -28,7 +27,6 @@ export type Database = {
         Insert: {
           code: string
           created_at?: string
-          host_key?: string
           id?: string
           phase?: string
           phase_ends_at?: string | null
@@ -38,7 +36,6 @@ export type Database = {
         Update: {
           code?: string
           created_at?: string
-          host_key?: string
           id?: string
           phase?: string
           phase_ends_at?: string | null
