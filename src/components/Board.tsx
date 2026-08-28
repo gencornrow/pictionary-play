@@ -9,6 +9,34 @@ const H = 640;
 /** Sentinel ink color: strokes with this color erase instead of paint. */
 export const ERASER_COLOR = "erase";
 
+/**
+ * Drop near-duplicate points and cap stroke length. Big rooms sync every stroke to
+ * every player, so raw pointer traces (hundreds of points each) flood the realtime feed.
+ */
+const MIN_STEP = 0.004;
+const MAX_POINTS = 300;
+
+function simplify(points: Point[]): Point[] {
+  const out: Point[] = [];
+  for (const p of points) {
+    const last = out[out.length - 1];
+    if (!last || Math.abs(p.x - last.x) + Math.abs(p.y - last.y) >= MIN_STEP) out.push(p);
+  }
+  const first = points[0]!;
+  const final = points[points.length - 1]!;
+  if (out.length === 0) out.push(first);
+  const tail = out[out.length - 1]!;
+  if (tail.x !== final.x || tail.y !== final.y) out.push(final);
+  if (out.length <= MAX_POINTS) return out;
+  const step = out.length / MAX_POINTS;
+  const thinned: Point[] = [];
+  for (let i = 0; i < MAX_POINTS; i += 1) thinned.push(out[Math.floor(i * step)]!);
+  thinned.push(out[out.length - 1]!);
+  return thinned;
+}
+
+
+
 
 type BoardProps = {
   strokes: Stroke[];
@@ -101,8 +129,9 @@ export function Board({
         drawing.current = false;
         const points = live;
         setLive(null);
-        if (points && points.length > 0) onStroke?.(points, inkColor, inkWidth);
+        if (points && points.length > 0) onStroke?.(simplify(points), inkColor, inkWidth);
       }}
+
 
       onPointerCancel={() => {
         drawing.current = false;
