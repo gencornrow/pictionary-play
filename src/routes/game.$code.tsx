@@ -289,7 +289,7 @@ function GameRoom() {
         .filter((p) => p.is_host)
         .map((p) => supabase.from("players").update({ team_id: null }).eq("id", p.id)),
     ]);
-    await refresh(gameId);
+    await Promise.all([refreshTeams(gameId), refreshPlayers(gameId)]);
     toast.success("Teams assigned");
   };
 
@@ -384,7 +384,8 @@ function GameRoom() {
         .insert({ game_id: gameId, round, player_id: me.id, team_id: teamId, rank });
       if (error) toast.error("Vote didn't land. Try again.");
     }
-    await refresh(gameId);
+    await refreshVotes(gameId);
+
   };
 
   const tally = useMemo(() => {
