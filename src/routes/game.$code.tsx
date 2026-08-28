@@ -76,26 +76,48 @@ function GameRoom() {
     return () => window.clearInterval(t);
   }, []);
 
+  // Lightweight, targeted refreshers. A full re-fetch of every stroke in the game
+  // on every roster/vote change does not survive a 25+ player room, so each table
+  // is refreshed on its own and drawing data is scoped to the current round.
+  const refreshPlayers = useCallback(async (id: string) => {
+    const { data } = await supabase.from("players").select("*").eq("game_id", id).order("created_at");
+    if (data) setPlayers(data as Player[]);
+  }, []);
+
+  const refreshTeams = useCallback(async (id: string) => {
+    const { data } = await supabase.from("teams").select("*").eq("game_id", id).order("created_at");
+    if (data) setTeams(data as Team[]);
+  }, []);
+
+  const refreshVotes = useCallback(async (id: string) => {
+    const { data } = await supabase.from("votes").select("*").eq("game_id", id);
+    if (data) setVotes(data as Vote[]);
+  }, []);
+
+  const refreshRoundData = useCallback(async (id: string, currentRound: number) => {
+    const [s, m] = await Promise.all([
+      supabase.from("strokes").select("*").eq("game_id", id).eq("round", currentRound).order("created_at"),
+      supabase.from("messages").select("*").eq("game_id", id).eq("round", currentRound).order("created_at"),
+    ]);
+    setStrokes((s.data ?? []) as unknown as Stroke[]);
+    setMessages((m.data ?? []) as Message[]);
+  }, []);
+
   const refresh = useCallback(
-    async (gameId?: string) => {
+    async (gameId?: string, currentRound?: number) => {
       const id = gameId ?? game?.id;
       if (!id) return;
-      const [t, p, s, m, v, g] = await Promise.all([
-        supabase.from("teams").select("*").eq("game_id", id).order("created_at"),
-        supabase.from("players").select("*").eq("game_id", id).order("created_at"),
-        supabase.from("strokes").select("*").eq("game_id", id).order("created_at"),
-        supabase.from("messages").select("*").eq("game_id", id).order("created_at"),
-        supabase.from("votes").select("*").eq("game_id", id),
-        supabase.from("games").select("*").eq("id", id).maybeSingle(),
+      const { data: g } = await supabase.from("games").select("*").eq("id", id).maybeSingle();
+      if (g) setGame(g as Game);
+      const r = currentRound ?? (g as Game | null)?.round ?? game?.round ?? 0;
+      await Promise.all([
+        refreshTeams(id),
+        refreshPlayers(id),
+        refreshVotes(id),
+        refreshRoundData(id, r),
       ]);
-      setTeams((t.data ?? []) as Team[]);
-      setPlayers((p.data ?? []) as Player[]);
-      setStrokes((s.data ?? []) as unknown as Stroke[]);
-      setMessages((m.data ?? []) as Message[]);
-      setVotes((v.data ?? []) as Vote[]);
-      if (g.data) setGame(g.data as Game);
     },
-    [game?.id],
+    [game?.id, game?.round, refreshTeams, refreshPlayers, refreshVotes, refreshRoundData],
   );
 
   // Initial load
@@ -113,7 +135,7 @@ function GameRoom() {
         return;
       }
       setGame(data as Game);
-      await refresh(data.id);
+      await refresh(data.id, (data as Game).round);
       if (!cancelled) setLoaded(true);
     })();
     return () => {
@@ -124,12 +146,20 @@ function GameRoom() {
 
   // Realtime
   const gameId = game?.id;
+  const gameRound = game?.round ?? 0;
+
+  // Drop stale rounds from memory whenever the round advances.
+  useEffect(() => {
+    if (!gameId || !gameRound) return;
+    void refreshRoundData(gameId, gameRound);
+  }, [gameId, gameRound, refreshRoundData]);
+
   useEffect(() => {
     if (!gameId) return;
     const filter = `game_id=eq.${gameId}`;
     const channel = supabase
       .channel(`room-${gameId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "games" }, (payload) => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "games", filter: `id=eq.${gameId}` }, (payload) => {
         const row = payload.new as Game | null;
         if (row && row.id === gameId) setGame(row);
       })
@@ -150,20 +180,21 @@ function GameRoom() {
         },
       )
       .on("postgres_changes", { event: "*", schema: "public", table: "players", filter }, () => {
-        void refresh(gameId);
+        void refreshPlayers(gameId);
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "teams", filter }, () => {
-        void refresh(gameId);
+        void refreshTeams(gameId);
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "votes", filter }, () => {
-        void refresh(gameId);
+        void refreshVotes(gameId);
       })
       .subscribe();
 
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [gameId, refresh]);
+  }, [gameId, refreshPlayers, refreshTeams, refreshVotes]);
+
 
   const me = useMemo(
     () => players.find((p) => p.id === identity?.playerId) ?? null,
