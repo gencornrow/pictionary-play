@@ -101,8 +101,9 @@ export function Board({
         drawing.current = false;
         const points = live;
         setLive(null);
-        if (points && points.length > 0) onStroke?.(points, inkColor, inkWidth);
+        if (points && points.length > 0) onStroke?.(simplify(points), inkColor, inkWidth);
       }}
+
 
       onPointerCancel={() => {
         drawing.current = false;
