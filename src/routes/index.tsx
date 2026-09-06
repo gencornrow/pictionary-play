@@ -7,7 +7,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { createRoom, joinRoom } from "@/lib/game.functions";
 import { randomCode, randomInkColor, randomNickname, saveIdentity } from "@/lib/game";
 
 export const Route = createFileRoute("/")({
@@ -56,26 +56,14 @@ function Landing() {
     setBusy(true);
     try {
       const code = randomCode();
-      const { data: game, error } = await supabase
-        .from("games")
-        .insert({ code })
-        .select()
-        .single();
-      if (error || !game) throw error ?? new Error("Could not create the room");
-
-      const { data: player, error: playerError } = await supabase
-        .from("players")
-        .insert({
-          game_id: game.id,
-          real_name: parsed.realName,
+      const { player } = await createRoom({
+        data: {
+          code,
+          realName: parsed.realName,
           nickname: parsed.nickname,
-          ink_color: randomInkColor(),
-          is_host: true,
-        })
-        .select()
-        .single();
-      if (playerError || !player) throw playerError ?? new Error("Could not join the room");
-
+          inkColor: randomInkColor(),
+        },
+      });
       saveIdentity(code, { playerId: player.id });
       await navigate({ to: "/game/$code", params: { code } });
     } catch (err) {
@@ -96,26 +84,18 @@ function Landing() {
     }
     setBusy(true);
     try {
-      const { data: game } = await supabase
-        .from("games")
-        .select("id, code")
-        .eq("code", code)
-        .maybeSingle();
-      if (!game) {
+      const { game, player } = await joinRoom({
+        data: {
+          code,
+          realName: parsed.realName,
+          nickname: parsed.nickname,
+          inkColor: randomInkColor(),
+        },
+      });
+      if (!game || !player) {
         toast.error("No room with that code");
         return;
       }
-      const { data: player, error } = await supabase
-        .from("players")
-        .insert({
-          game_id: game.id,
-          real_name: parsed.realName,
-          nickname: parsed.nickname,
-          ink_color: randomInkColor(),
-        })
-        .select()
-        .single();
-      if (error || !player) throw error ?? new Error("join failed");
       saveIdentity(code, { playerId: player.id });
       await navigate({ to: "/game/$code", params: { code } });
     } catch (err) {
