@@ -358,7 +358,7 @@ function createLocalBackend(): Backend {
       const rows = await s`
         INSERT INTO strokes (game_id, team_id, player_id, round, points, color, width)
         VALUES (${stroke.gameId}, ${stroke.teamId}, ${stroke.playerId}, ${stroke.round},
-                ${s.json(stroke.points as unknown as Record<string, unknown>[])}, ${stroke.color}, ${stroke.width})
+                ${s.json(stroke.points as never)}, ${stroke.color}, ${stroke.width})
         RETURNING id, team_id, round, points, color, width`;
       return normalizeRow<Stroke>(rows[0]!);
     },

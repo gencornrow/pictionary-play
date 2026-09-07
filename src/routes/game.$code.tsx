@@ -10,6 +10,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  createTeamsAndAssign,
+  fetchGame,
+  fetchPlayers,
+  fetchRoundData,
+  fetchTeams,
+  fetchVotes,
+  getBackendMode,
+  loadRoom,
+  retractVotes,
+  saveStroke,
+  sendChatMessage,
+  submitVote,
+  updateGamePhase,
+} from "@/lib/game.functions";
+import {
   DISCUSS_SECONDS,
   DRAW_SECONDS,
   RANKS,
@@ -49,9 +64,12 @@ export const Route = createFileRoute("/game/$code")({
   component: GameRoom,
 });
 
+type BackendMode = "cloud" | "local";
+
 function GameRoom() {
   const { code } = Route.useParams();
   const [identity, setIdentity] = useState<Identity | null>(null);
+  const [mode, setMode] = useState<BackendMode | null>(null);
   const [game, setGame] = useState<Game | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -80,34 +98,31 @@ function GameRoom() {
   // on every roster/vote change does not survive a 25+ player room, so each table
   // is refreshed on its own and drawing data is scoped to the current round.
   const refreshPlayers = useCallback(async (id: string) => {
-    const { data } = await supabase.from("players").select("*").eq("game_id", id).order("created_at");
+    const data = await fetchPlayers({ data: { gameId: id } });
     if (data) setPlayers(data as Player[]);
   }, []);
 
   const refreshTeams = useCallback(async (id: string) => {
-    const { data } = await supabase.from("teams").select("*").eq("game_id", id).order("created_at");
+    const data = await fetchTeams({ data: { gameId: id } });
     if (data) setTeams(data as Team[]);
   }, []);
 
   const refreshVotes = useCallback(async (id: string) => {
-    const { data } = await supabase.from("votes").select("*").eq("game_id", id);
+    const data = await fetchVotes({ data: { gameId: id } });
     if (data) setVotes(data as Vote[]);
   }, []);
 
   const refreshRoundData = useCallback(async (id: string, currentRound: number) => {
-    const [s, m] = await Promise.all([
-      supabase.from("strokes").select("*").eq("game_id", id).eq("round", currentRound).order("created_at"),
-      supabase.from("messages").select("*").eq("game_id", id).eq("round", currentRound).order("created_at"),
-    ]);
-    setStrokes((s.data ?? []) as unknown as Stroke[]);
-    setMessages((m.data ?? []) as Message[]);
+    const data = await fetchRoundData({ data: { gameId: id, round: currentRound } });
+    setStrokes((data?.strokes ?? []) as Stroke[]);
+    setMessages((data?.messages ?? []) as Message[]);
   }, []);
 
   const refresh = useCallback(
     async (gameId?: string, currentRound?: number) => {
       const id = gameId ?? game?.id;
       if (!id) return;
-      const { data: g } = await supabase.from("games").select("*").eq("id", id).maybeSingle();
+      const g = await fetchGame({ data: { gameId: id } });
       if (g) setGame(g as Game);
       const r = currentRound ?? (g as Game | null)?.round ?? game?.round ?? 0;
       await Promise.all([
@@ -124,19 +139,25 @@ function GameRoom() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("games")
-        .select("*")
-        .eq("code", code.toUpperCase())
-        .maybeSingle();
+      try {
+        const m = await getBackendMode();
+        if (!cancelled) setMode(m as BackendMode);
+      } catch {
+        if (!cancelled) setMode("cloud");
+      }
+      const data = await loadRoom({ data: { code } });
       if (cancelled) return;
-      if (!data) {
+      if (!data.game) {
         setLoaded(true);
         return;
       }
-      setGame(data as Game);
-      await refresh(data.id, (data as Game).round);
-      if (!cancelled) setLoaded(true);
+      setGame(data.game as Game);
+      setTeams(data.teams as Team[]);
+      setPlayers(data.players as Player[]);
+      setVotes(data.votes as Vote[]);
+      setStrokes(data.strokes as Stroke[]);
+      setMessages(data.messages as Message[]);
+      setLoaded(true);
     })();
     return () => {
       cancelled = true;
@@ -154,8 +175,9 @@ function GameRoom() {
     void refreshRoundData(gameId, gameRound);
   }, [gameId, gameRound, refreshRoundData]);
 
+  // Cloud mode: instant realtime subscriptions.
   useEffect(() => {
-    if (!gameId) return;
+    if (!gameId || mode !== "cloud") return;
     const filter = `game_id=eq.${gameId}`;
     const channel = supabase
       .channel(`room-${gameId}`)
@@ -193,8 +215,16 @@ function GameRoom() {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [gameId, refreshPlayers, refreshTeams, refreshVotes]);
+  }, [gameId, mode, refreshPlayers, refreshTeams, refreshVotes]);
 
+  // Local (self-hosted) mode: no realtime push available, so poll the server.
+  useEffect(() => {
+    if (!gameId || mode !== "local") return;
+    const t = window.setInterval(() => {
+      void refresh(gameId);
+    }, 1000);
+    return () => window.clearInterval(t);
+  }, [gameId, mode, refresh]);
 
   const me = useMemo(
     () => players.find((p) => p.id === identity?.playerId) ?? null,
@@ -221,17 +251,11 @@ function GameRoom() {
   );
 
   const setPhase = useCallback(
-    async (next: string, endsInSeconds: number | null, extra: Record<string, unknown> = {}) => {
+    async (next: string, endsInSeconds: number | null, extra: { prompt?: string; round?: number } = {}) => {
       if (!gameId) return;
-      await supabase
-        .from("games")
-        .update({
-          phase: next,
-          phase_ends_at:
-            endsInSeconds === null ? null : new Date(Date.now() + endsInSeconds * 1000).toISOString(),
-          ...extra,
-        })
-        .eq("id", gameId);
+      await updateGamePhase({
+        data: { gameId, phase: next, endsInSeconds, ...extra },
+      });
     },
     [gameId],
   );
@@ -268,28 +292,11 @@ function GameRoom() {
   const assignTeams = async () => {
     if (!gameId) return;
     const presets = TEAM_PRESETS.slice(0, Math.max(2, Math.min(4, teamCount)));
-    await supabase.from("teams").insert(
-      presets.map((p) => ({ game_id: gameId, name: p.name, color: p.color })),
-    );
-    const { data: created } = await supabase
-      .from("teams")
-      .select("*")
-      .eq("game_id", gameId)
-      .order("created_at");
-    const fresh = (created ?? []) as Team[];
-    const shuffled = [...players].filter((p) => !p.is_host).sort(() => Math.random() - 0.5);
-    await Promise.all([
-      ...shuffled.map((p, i) =>
-        supabase
-          .from("players")
-          .update({ team_id: fresh[i % fresh.length]!.id })
-          .eq("id", p.id),
-      ),
-      ...players
-        .filter((p) => p.is_host)
-        .map((p) => supabase.from("players").update({ team_id: null }).eq("id", p.id)),
-    ]);
-    await Promise.all([refreshTeams(gameId), refreshPlayers(gameId)]);
+    const { teams: created, players: updated } = await createTeamsAndAssign({
+      data: { gameId, teams: presets },
+    });
+    setTeams(created as Team[]);
+    setPlayers(updated as Player[]);
     toast.success("Teams assigned");
   };
 
@@ -309,13 +316,15 @@ function GameRoom() {
 
   const sendMessage = async (content: string) => {
     if (!gameId || !me?.team_id) return;
-    await supabase.from("messages").insert({
-      game_id: gameId,
-      team_id: me.team_id,
-      player_id: me.id,
-      nickname: me.nickname,
-      round,
-      content,
+    await sendChatMessage({
+      data: {
+        gameId,
+        teamId: me.team_id,
+        playerId: me.id,
+        nickname: me.nickname,
+        round,
+        content,
+      },
     });
   };
 
@@ -336,32 +345,27 @@ function GameRoom() {
       width: strokeWidth,
     };
     setStrokes((prev) => [...prev, optimistic]);
-    const { data, error } = await supabase
-      .from("strokes")
-      .insert({
-        game_id: gameId,
-        team_id: me.team_id,
-        player_id: me.id,
-        round,
-        points: points as unknown as never,
-        color,
-        width: strokeWidth,
-      })
-      .select()
-      .single();
-    if (error) {
-      console.error("[strokes] insert failed", error);
-      toast.error(error.message || "Could not save that stroke.");
-      setStrokes((prev) => prev.filter((s) => s.id !== optimistic.id));
-      return;
-    }
-    if (data) {
+    try {
+      const saved = await saveStroke({
+        data: {
+          gameId,
+          teamId: me.team_id,
+          playerId: me.id,
+          round,
+          points,
+          color,
+          width: strokeWidth,
+        },
+      });
       setStrokes((prev) =>
-        prev.map((s) => (s.id === optimistic.id ? (data as unknown as Stroke) : s)),
+        prev.map((s) => (s.id === optimistic.id ? (saved as Stroke) : s)),
       );
+    } catch (err) {
+      console.error("[strokes] insert failed", err);
+      toast.error(err instanceof Error ? err.message : "Could not save that stroke.");
+      setStrokes((prev) => prev.filter((s) => s.id !== optimistic.id));
     }
   };
-
 
   const myVotes = useMemo(
     () => roundVotes.filter((v) => v.player_id === me?.id),
@@ -372,20 +376,19 @@ function GameRoom() {
     if (!gameId || !me) return;
     const existing = myVotes.find((v) => v.team_id === teamId && v.rank === rank);
     const conflicting = myVotes.filter((v) => v.team_id === teamId || v.rank === rank);
-    if (conflicting.length > 0) {
-      await supabase
-        .from("votes")
-        .delete()
-        .in("id", conflicting.map((v) => v.id));
-    }
+    const conflictIds = conflicting.map((v) => v.id);
     if (!existing) {
-      const { error } = await supabase
-        .from("votes")
-        .insert({ game_id: gameId, round, player_id: me.id, team_id: teamId, rank });
-      if (error) toast.error("Vote didn't land. Try again.");
+      try {
+        await submitVote({
+          data: { gameId, round, playerId: me.id, teamId, rank, replaceVoteIds: conflictIds },
+        });
+      } catch {
+        toast.error("Vote didn't land. Try again.");
+      }
+    } else if (conflictIds.length > 0) {
+      await retractVotes({ data: { ids: conflictIds } });
     }
     await refreshVotes(gameId);
-
   };
 
   const tally = useMemo(() => {
