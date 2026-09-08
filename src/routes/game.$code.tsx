@@ -672,7 +672,7 @@ function GameRoom() {
               </>
             ) : (
               <p className="text-muted-foreground">
-                You're spectating this round — the host can reshuffle teams to add you in.
+                You're spectating this round — teams are locked in once set, so enjoy the show!
               </p>
             )}
           </div>
