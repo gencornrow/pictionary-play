@@ -290,11 +290,13 @@ function GameRoom() {
     void setPhase("results", null);
   }, [isHost, phase, roundVotes.length, eligibleVoters, maxPicks, setPhase]);
 
-  // Suggest ~3 players per team by default until the host picks a count
+  // Suggest ~3 players per team by default until the host picks a count.
+  // Using floor(P/3) lets the round-robin assignment absorb remainders as
+  // teams of 4 instead of creating 2-player teams.
   const nonHostCount = players.filter((p) => !p.is_host).length;
   useEffect(() => {
     if (teamCountTouched.current || teams.length > 0) return;
-    setTeamCount(Math.max(2, Math.ceil(nonHostCount / 3)));
+    setTeamCount(Math.max(2, Math.floor(nonHostCount / 3)));
   }, [nonHostCount, teams.length]);
 
   const assignTeams = async () => {
