@@ -70,6 +70,21 @@ export const TEAM_PRESETS = [
   { name: "Team Mint", color: "#7A95B0" },
 ];
 
+const TEAM_NAMES = [
+  "Volt", "Nova", "Ember", "Mint", "Onyx", "Slate", "Fern", "Azure",
+  "Cobalt", "Maple", "Juniper", "Harbor", "Summit", "Birch", "Cedar",
+  "Delta", "Echo", "Flint", "Grove", "Heron",
+];
+
+// Generate `count` team presets, cycling the ink palette for distinct colors.
+export function generateTeamPresets(count: number) {
+  const n = Math.max(0, Math.floor(count));
+  return Array.from({ length: n }, (_, i) => ({
+    name: `Team ${TEAM_NAMES[i % TEAM_NAMES.length]}${i >= TEAM_NAMES.length ? ` ${Math.floor(i / TEAM_NAMES.length) + 1}` : ""}`,
+    color: INK_COLORS[i % INK_COLORS.length],
+  }));
+}
+
 export const INK_COLORS = [
   "#1F3B5B",
   "#4E6B88",
