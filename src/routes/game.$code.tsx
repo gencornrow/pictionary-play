@@ -28,7 +28,7 @@ import {
   DISCUSS_SECONDS,
   DRAW_SECONDS,
   RANKS,
-  TEAM_PRESETS,
+  generateTeamPresets,
   formatClock,
   rankLabel,
   rankPoints,
@@ -83,6 +83,7 @@ function GameRoom() {
   const [tool, setTool] = useState<"brush" | "eraser">("brush");
   const [promptDraft, setPromptDraft] = useState("");
   const [teamCount, setTeamCount] = useState(2);
+  const teamCountTouched = useRef(false);
   const advancing = useRef(false);
 
   useEffect(() => {
@@ -289,9 +290,16 @@ function GameRoom() {
     void setPhase("results", null);
   }, [isHost, phase, roundVotes.length, eligibleVoters, maxPicks, setPhase]);
 
+  // Suggest ~3 players per team by default until the host picks a count
+  const nonHostCount = players.filter((p) => !p.is_host).length;
+  useEffect(() => {
+    if (teamCountTouched.current || teams.length > 0) return;
+    setTeamCount(Math.max(2, Math.ceil(nonHostCount / 3)));
+  }, [nonHostCount, teams.length]);
+
   const assignTeams = async () => {
     if (!gameId) return;
-    const presets = TEAM_PRESETS.slice(0, Math.max(2, Math.min(4, teamCount)));
+    const presets = generateTeamPresets(Math.max(2, teamCount));
     const { teams: created, players: updated } = await createTeamsAndAssign({
       data: { gameId, teams: presets },
     });
@@ -479,9 +487,11 @@ function GameRoom() {
                   id="teamCount"
                   type="number"
                   min={2}
-                  max={4}
                   value={teamCount}
-                  onChange={(e) => setTeamCount(Number(e.target.value))}
+                  onChange={(e) => {
+                    teamCountTouched.current = true;
+                    setTeamCount(Number(e.target.value));
+                  }}
                   className="w-24"
                 />
               </div>
