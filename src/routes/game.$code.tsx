@@ -496,6 +496,9 @@ function GameRoom() {
                   }}
                   className="w-24"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Teams will be 3–4 players so no one is stuck in a pair.
+                </p>
               </div>
         <Button
                 variant="neonAccent"
