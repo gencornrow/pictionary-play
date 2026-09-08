@@ -290,6 +290,13 @@ function GameRoom() {
     void setPhase("results", null);
   }, [isHost, phase, roundVotes.length, eligibleVoters, maxPicks, setPhase]);
 
+  // Suggest ~3 players per team by default until the host picks a count
+  const nonHostCount = players.filter((p) => !p.is_host).length;
+  useEffect(() => {
+    if (teamCountTouched.current || teams.length > 0) return;
+    setTeamCount(Math.max(2, Math.ceil(nonHostCount / 3)));
+  }, [nonHostCount, teams.length]);
+
   const assignTeams = async () => {
     if (!gameId) return;
     const presets = generateTeamPresets(Math.max(2, teamCount));
